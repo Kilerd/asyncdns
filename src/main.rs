@@ -49,7 +49,27 @@ async fn x() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn request_handler(sender: Sender<(Vec<u8>, SocketAddr)>, buffer: Vec<u8>, data:(usize, SocketAddr)) {
+//    let tid: [_;2]=buffer[0..2];
+    let flags: u16 = u16::from_be_bytes([buffer[2], buffer[3]]);
+    let questions: u32 = u32::from_be_bytes([buffer[4], buffer[5], buffer[6], buffer[7]]);
+//    let flags: u16 = ((buffer[2] as u16) << 8) & (buffer[3] as u16);
+    if (flags & 0xF900 ) == 0x100 && questions == 0x00010000 {
+        let type_index = find_type(buffer).unwrap_or(2);
+        dbg!(type_index);
+    }
+    dbg!(flags);
+}
 
+fn find_type(buffer: Vec<u8>) -> Option<i32> {
+    let mut i :i32 =12;
+    loop {
+        let option = buffer.get(i as usize)?;
+        if *option == 0 {
+            return Some(i+1);
+        }else {
+            i += *option as i32 + 1
+        }
+    }
 }
 
 #[tokio::main]
